@@ -9,6 +9,7 @@
     <ApplicationIcon>Assets\cue.ico</ApplicationIcon>
     <Product>Cue</Product>
     <AssemblyTitle>Cue</AssemblyTitle>
+    <Version>1.0.0</Version>
   </PropertyGroup>
 
   <ItemGroup>
@@ -31,6 +32,8 @@
     <None Remove="Fonts\*.ttf;Assets\cue.ico" />
     <Resource Include="Fonts\*.ttf" />
     <Resource Include="Assets\cue.ico" />
+    <EmbeddedResource Include="prompt.txt" LogicalName="prompt.txt" />
+    <EmbeddedResource Include="terms.txt" LogicalName="terms.txt" />
   </ItemGroup>
 
 </Project>

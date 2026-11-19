@@ -2,8 +2,6 @@ namespace LiveTranscriber;
 
 public sealed class Settings
 {
-    private const string FallbackPrompt = "Знайди останнє питання у фрагменті розмови і дай на нього коротку, зрозумілу відповідь українською, яку можна сказати вголос.";
-
     public required string? EnvironmentApiKey { get; init; }
     public required Uri BaseUrl { get; init; }
     public required string ChatModel { get; init; }
@@ -17,11 +15,7 @@ public sealed class Settings
     {
         var apiKey = Environment.GetEnvironmentVariable("OPENAI_API_KEY");
         var language = Read("TRANSCRIBE_LANGUAGE", "uk");
-        var promptPath = Path.Combine(AppContext.BaseDirectory, "prompt.txt");
-        var termsPath = Path.Combine(AppContext.BaseDirectory, "terms.txt");
-        var terms = File.Exists(termsPath)
-            ? File.ReadAllLines(termsPath).Select(line => line.Trim()).Where(line => line.Length > 0)
-            : [];
+        var terms = ReadText("terms.txt").Split('\n').Select(line => line.Trim()).Where(line => line.Length > 0);
 
         return new Settings
         {
@@ -30,7 +24,7 @@ public sealed class Settings
             ChatModel = Read("OPENAI_MODEL", "gpt-4o-mini"),
             TranscribeModel = Read("OPENAI_TRANSCRIBE_MODEL", "gpt-4o-transcribe"),
             Language = language == "auto" ? null : language,
-            SystemPrompt = File.Exists(promptPath) ? File.ReadAllText(promptPath) : FallbackPrompt,
+            SystemPrompt = ReadText("prompt.txt").Trim(),
             TranscribeTerms = string.Join(", ", terms),
             DataFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "LiveTranscriber")
         };
@@ -40,5 +34,20 @@ public sealed class Settings
     {
         var value = Environment.GetEnvironmentVariable(name);
         return string.IsNullOrWhiteSpace(value) ? fallback : value.Trim();
+    }
+
+    private static string ReadText(string name)
+    {
+        var path = Path.Combine(AppContext.BaseDirectory, name);
+
+        if (File.Exists(path))
+        {
+            return File.ReadAllText(path);
+        }
+
+        using var stream = typeof(Settings).Assembly.GetManifestResourceStream(name)
+            ?? throw new InvalidOperationException($"У програмі немає вбудованого файлу {name}");
+        using var reader = new StreamReader(stream);
+        return reader.ReadToEnd();
     }
 }
