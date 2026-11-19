@@ -1,0 +1,49 @@
+C#
+.NET
+ASP.NET Core
+Entity Framework
+LINQ
+SOLID
+OOP
+DRY
+KISS
+YAGNI
+CQRS
+MediatR
+async/await
+Task
+IEnumerable
+IQueryable
+interface
+abstract class
+generic
+delegate
+lambda
+record
+struct
+nullable
+dependency injection
+middleware
+REST API
+JSON
+SQL
+PostgreSQL
+Redis
+Docker
+Kubernetes
+CI/CD
+Git
+xUnit
+Moq
+Dapper
+AutoMapper
+FluentValidation
+Swagger
+Postman
+garbage collector
+boxing
+deadlock
+Singleton
+Repository
+Clean Architecture
+microservices
