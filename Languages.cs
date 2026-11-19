@@ -14,8 +14,7 @@ public static class Languages
         new("pl", "Polski", "Polish"),
         new("de", "Deutsch", "German"),
         new("es", "Español", "Spanish"),
-        new("fr", "Français", "French"),
-        new("ru", "Русский", "Russian")
+        new("fr", "Français", "French")
     ];
 
     public static LanguageOption? Find(string? code) => All.FirstOrDefault(language => language.Code == code);
