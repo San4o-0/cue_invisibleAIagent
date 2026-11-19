@@ -21,6 +21,9 @@ public sealed class UserPreferences
     public bool AnswersOnly { get; set; }
     public double CompactWidth { get; set; } = 560;
     public double CompactHeight { get; set; } = 380;
+    public string? CustomPrompt { get; set; }
+    public string? ConversationLanguage { get; set; }
+    public string AnswerLanguage { get; set; } = "uk";
 
     public static UserPreferences Load(string path)
     {

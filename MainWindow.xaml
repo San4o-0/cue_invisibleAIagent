@@ -399,6 +399,62 @@
             </Setter>
         </Style>
 
+        <Style x:Key="Chip" TargetType="RadioButton">
+            <Setter Property="Foreground" Value="{StaticResource InkBrush}" />
+            <Setter Property="Background" Value="{DynamicResource FieldBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource LineBrush}" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Margin" Value="0,0,8,8" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="RadioButton">
+                        <Border x:Name="Root" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="1" CornerRadius="15" Padding="14,6">
+                            <ContentPresenter VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Root" Property="BorderBrush" Value="{StaticResource LineHoverBrush}" />
+                            </Trigger>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter TargetName="Root" Property="BorderBrush" Value="{StaticResource CueBrush}" />
+                            </Trigger>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="Root" Property="Background" Value="{StaticResource CueBrush}" />
+                                <Setter TargetName="Root" Property="BorderBrush" Value="{StaticResource CueBrush}" />
+                                <Setter Property="Foreground" Value="{StaticResource NightBrush}" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="SettingsHeading" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="15.5" />
+            <Setter Property="FontWeight" Value="Bold" />
+            <Setter Property="Foreground" Value="{StaticResource InkBrush}" />
+            <Setter Property="Margin" Value="0,26,0,4" />
+        </Style>
+
+        <Style x:Key="SettingsNote" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="Foreground" Value="{StaticResource MistBrush}" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+            <Setter Property="LineHeight" Value="19" />
+            <Setter Property="Margin" Value="0,0,0,10" />
+        </Style>
+
+        <Style x:Key="SettingsLabel" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="13.5" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Foreground" Value="{StaticResource InkBrush}" />
+            <Setter Property="Margin" Value="0,16,0,8" />
+        </Style>
+
         <Style x:Key="Icon" TargetType="TextBlock">
             <Setter Property="FontFamily" Value="{StaticResource IconFont}" />
             <Setter Property="FontSize" Value="13" />
@@ -518,59 +574,82 @@
                     <Border />
                 </DockPanel>
 
-                <Border x:Name="SettingsPanel" Grid.Row="1" Margin="0,0,0,12" Padding="16,12" CornerRadius="10"
-                        Background="{DynamicResource FieldBrush}" BorderBrush="{StaticResource LineBrush}" BorderThickness="1"
-                        Visibility="Collapsed">
-                    <StackPanel>
-                    <WrapPanel VerticalAlignment="Center">
-                        <StackPanel Orientation="Horizontal" Margin="0,0,32,0">
-                            <TextBlock Style="{StaticResource Muted}" FontSize="13.5" Foreground="{StaticResource InkBrush}"
-                                       Margin="0,0,10,0" Text="Гаряча клавіша" />
-                            <TextBox x:Name="HotkeyBox" Width="150" IsReadOnly="True" Cursor="Hand" TextWrapping="NoWrap"
-                                     HorizontalContentAlignment="Center" Padding="8,6"
-                                     ToolTip="Клацни сюди й натисни нову комбінацію. Esc — скасувати"
-                                     PreviewKeyDown="OnHotkeyKeyDown"
-                                     GotKeyboardFocus="OnHotkeyFocus"
-                                     LostKeyboardFocus="OnHotkeyBlur" />
-                            <TextBlock Style="{StaticResource Muted}" Margin="10,0,0,0" Text="працює в будь-якому вікні" />
-                        </StackPanel>
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Style="{StaticResource Muted}" FontSize="13.5" Foreground="{StaticResource InkBrush}"
-                                       Margin="0,0,10,0" Text="Брати останні" />
-                            <TextBox x:Name="SecondsBox" Width="58" TextWrapping="NoWrap" HorizontalContentAlignment="Center"
-                                     Padding="6,6"
-                                     ToolTip="Скільки останніх секунд розмови Cue бере для підказки (5–1800). Enter — застосувати"
-                                     PreviewTextInput="OnSecondsInput"
-                                     KeyDown="OnSecondsKeyDown"
-                                     LostKeyboardFocus="OnSecondsBlur" />
-                            <TextBlock Style="{StaticResource Muted}" FontSize="13.5" Foreground="{StaticResource InkBrush}"
-                                       Margin="10,0,0,0" Text="секунд розмови" />
-                        </StackPanel>
-                    </WrapPanel>
+                <Border x:Name="SettingsPanel" Grid.Row="2" CornerRadius="12" BorderBrush="{StaticResource LineBrush}"
+                        BorderThickness="1" Visibility="Collapsed">
+                    <DockPanel>
+                        <Border DockPanel.Dock="Bottom" BorderBrush="{StaticResource LineBrush}" BorderThickness="0,1,0,0" Padding="20,12">
+                            <DockPanel>
+                                <Button DockPanel.Dock="Right" Style="{StaticResource PrimaryButton}" Content="Готово" Click="OnCloseSettings" />
+                                <TextBlock Style="{StaticResource Muted}" Text="Зміни застосовуються й зберігаються одразу" />
+                            </DockPanel>
+                        </Border>
 
-                    <Border Height="1" Margin="0,12" Background="{StaticResource LineBrush}" />
+                        <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="22,18,22,8">
+                            <StackPanel MaxWidth="860" HorizontalAlignment="Left">
+                                <TextBlock Style="{StaticResource SettingsHeading}" Text="Ключ OpenAI" Margin="0" />
+                                <TextBlock Style="{StaticResource SettingsNote}"
+                                           Text="Cue працює через твій акаунт OpenAI. Ключ зберігається зашифрованим лише на цьому комп'ютері й іде тільки в OpenAI." />
+                                <WrapPanel>
+                                    <Grid Width="320">
+                                        <PasswordBox x:Name="ApiKeyBox" PasswordChanged="OnApiKeyChanged" KeyDown="OnApiKeyKeyDown" />
+                                        <TextBlock x:Name="ApiKeyHint" Style="{StaticResource Muted}" Foreground="{StaticResource HintBrush}"
+                                                   Margin="12,0" IsHitTestVisible="False" Text="Встав ключ, що починається з sk-" />
+                                    </Grid>
+                                    <Button x:Name="SaveKeyButton" Content="Зберегти" Padding="12,5" FontSize="12.5" Click="OnSaveApiKey" />
+                                    <Button x:Name="DeleteKeyButton" Content="Видалити" Padding="12,5" FontSize="12.5" Click="OnDeleteApiKey"
+                                            ToolTip="Видалити збережений ключ з цього комп'ютера" />
+                                    <TextBlock x:Name="ApiKeyStatus" Style="{StaticResource Muted}" Margin="14,0,14,0" />
+                                    <TextBlock Style="{StaticResource Muted}" FontSize="13">
+                                        <Hyperlink NavigateUri="https://platform.openai.com/api-keys" RequestNavigate="OnOpenLink">Де взяти ключ</Hyperlink>
+                                    </TextBlock>
+                                </WrapPanel>
 
-                    <WrapPanel VerticalAlignment="Center">
-                        <TextBlock Style="{StaticResource Muted}" FontSize="13.5" Foreground="{StaticResource InkBrush}"
-                                   Margin="0,0,10,0" Text="Ключ OpenAI" />
-                        <Grid Width="300">
-                            <PasswordBox x:Name="ApiKeyBox" PasswordChanged="OnApiKeyChanged" KeyDown="OnApiKeyKeyDown"
-                                         ToolTip="Ключ зберігається зашифрованим лише на цьому комп'ютері й іде тільки в OpenAI" />
-                            <TextBlock x:Name="ApiKeyHint" Style="{StaticResource Muted}" Foreground="{StaticResource HintBrush}"
-                                       Margin="12,0" IsHitTestVisible="False" Text="Встав ключ, що починається з sk-" />
-                        </Grid>
-                        <Button x:Name="SaveKeyButton" Content="Зберегти" Padding="12,5" FontSize="12.5" Click="OnSaveApiKey" />
-                        <Button x:Name="DeleteKeyButton" Content="Видалити" Padding="12,5" FontSize="12.5" Click="OnDeleteApiKey"
-                                ToolTip="Видалити збережений ключ з цього комп'ютера" />
-                        <TextBlock x:Name="ApiKeyStatus" Style="{StaticResource Muted}" Margin="14,0,14,0" />
-                        <TextBlock Style="{StaticResource Muted}" FontSize="13">
-                            <Hyperlink NavigateUri="https://platform.openai.com/api-keys" RequestNavigate="OnOpenLink">Де взяти ключ</Hyperlink>
-                        </TextBlock>
-                    </WrapPanel>
-                    </StackPanel>
+                                <TextBlock Style="{StaticResource SettingsHeading}" Text="Як Cue відповідає" />
+                                <DockPanel>
+                                    <Button DockPanel.Dock="Right" Content="Повернути стандартну" Padding="12,5" FontSize="12.5"
+                                            VerticalAlignment="Top" Click="OnResetPrompt" />
+                                    <TextBlock Style="{StaticResource SettingsNote}" Margin="0,0,16,10"
+                                               Text="Інструкція, за якою Cue готує підказки. Пиши своїми словами: наскільки коротко, яким тоном, на що звертати увагу." />
+                                </DockPanel>
+                                <TextBox x:Name="PromptBox" Height="160" AcceptsReturn="True" TextWrapping="Wrap"
+                                         VerticalScrollBarVisibility="Auto" FontSize="13.5" LostKeyboardFocus="OnPromptBlur" />
+                                <TextBlock Style="{StaticResource SettingsLabel}" Text="Мова підказок" />
+                                <WrapPanel x:Name="AnswerLanguages" />
+
+                                <TextBlock Style="{StaticResource SettingsHeading}" Text="Розмова" />
+                                <TextBlock Style="{StaticResource SettingsNote}"
+                                           Text="Якою мовою говорять у дзвінку. Якщо обрати точну мову, розпізнавання буде точнішим." />
+                                <WrapPanel x:Name="ConversationLanguages" />
+                                <StackPanel Orientation="Horizontal" Margin="0,16,0,0">
+                                    <TextBlock Style="{StaticResource Muted}" FontSize="13.5" Foreground="{StaticResource InkBrush}"
+                                               Margin="0,0,10,0" Text="Для підказки брати останні" />
+                                    <TextBox x:Name="SecondsBox" Width="58" TextWrapping="NoWrap" HorizontalContentAlignment="Center"
+                                             Padding="6,6"
+                                             ToolTip="Від 5 до 1800 секунд. Enter — застосувати"
+                                             PreviewTextInput="OnSecondsInput"
+                                             KeyDown="OnSecondsKeyDown"
+                                             LostKeyboardFocus="OnSecondsBlur" />
+                                    <TextBlock Style="{StaticResource Muted}" FontSize="13.5" Foreground="{StaticResource InkBrush}"
+                                               Margin="10,0,0,0" Text="секунд розмови" />
+                                </StackPanel>
+
+                                <TextBlock Style="{StaticResource SettingsHeading}" Text="Гаряча клавіша" />
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                                    <TextBox x:Name="HotkeyBox" Width="150" IsReadOnly="True" Cursor="Hand" TextWrapping="NoWrap"
+                                             HorizontalContentAlignment="Center" Padding="8,6"
+                                             ToolTip="Клацни сюди й натисни нову комбінацію. Esc — скасувати"
+                                             PreviewKeyDown="OnHotkeyKeyDown"
+                                             GotKeyboardFocus="OnHotkeyFocus"
+                                             LostKeyboardFocus="OnHotkeyBlur" />
+                                    <TextBlock Style="{StaticResource Muted}" Margin="12,0,0,0"
+                                               Text="Натисни її в будь-якому вікні, щоб отримати підказку. Клацни на поле, щоб змінити" />
+                                </StackPanel>
+                            </StackPanel>
+                        </ScrollViewer>
+                    </DockPanel>
                 </Border>
 
-                <Grid Grid.Row="2">
+                <Grid x:Name="ContentGrid" Grid.Row="2">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition x:Name="LeftColumn" Width="2*" MinWidth="260" />
                         <ColumnDefinition x:Name="SplitterColumn" Width="14" />

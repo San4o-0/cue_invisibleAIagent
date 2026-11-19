@@ -16,6 +16,8 @@ public sealed class Assistant : IDisposable
     public Assistant(Settings settings, string apiKey)
     {
         this.settings = settings;
+        SystemPrompt = settings.SystemPrompt;
+        Language = settings.Language;
         openAi = new OpenAiClient(settings, apiKey);
         transcript = new Transcript(Path.Combine(settings.DataFolder, "transcripts", $"{DateTime.Now:yyyy-MM-dd_HH-mm-ss}.txt"));
         recorder = new LoopbackRecorder(segment => segments.Writer.TryWrite(segment));
@@ -27,6 +29,12 @@ public sealed class Assistant : IDisposable
     public string Format => recorder.Format;
 
     public TimeSpan ContextWindow { get; set; } = TimeSpan.FromSeconds(90);
+
+    public string SystemPrompt { get; set; }
+
+    public string? Language { get; set; }
+
+    public string? AnswerLanguage { get; set; }
 
     public string ApiKey
     {
@@ -62,12 +70,16 @@ public sealed class Assistant : IDisposable
         }
 
         var request = BuildRequest(fragment, question);
-        var messages = new List<ChatMessage> { new("system", settings.SystemPrompt) };
+        var messages = new List<ChatMessage> { new("system", SystemPrompt) };
 
         if (!string.IsNullOrWhiteSpace(context))
         {
             messages.Add(new ChatMessage("system", $"Додатковий контекст від користувача:{Environment.NewLine}{context.Trim()}"));
         }
+
+        messages.Add(new ChatMessage("system", AnswerLanguage is null
+            ? "Answer in the same language the conversation is in."
+            : $"Always answer in {AnswerLanguage}, whatever language the conversation is in."));
 
         messages.AddRange(history);
         messages.Add(new ChatMessage("user", request));
@@ -122,7 +134,9 @@ public sealed class Assistant : IDisposable
 
         if (settings.TranscribeTerms.Length > 0)
         {
-            parts.Add($"Розмова українською про програмування. У мовленні трапляються англійські терміни: {settings.TranscribeTerms}.");
+            parts.Add(Language == "uk"
+                ? $"Розмова українською про програмування. У мовленні трапляються англійські терміни: {settings.TranscribeTerms}."
+                : $"A conversation about programming. Technical terms that may come up: {settings.TranscribeTerms}.");
         }
 
         if (previous.Length > 0)
@@ -147,7 +161,7 @@ public sealed class Assistant : IDisposable
                 try
                 {
                     var prompt = TranscriptionPrompt();
-                    var text = await openAi.TranscribeAsync(segment, prompt, cancellation.Token);
+                    var text = await openAi.TranscribeAsync(segment, prompt, Language, cancellation.Token);
                     text = Hallucinations.Clean(text, prompt, LoopbackRecorder.Duration(segment));
 
                     if (text.Length > 0)

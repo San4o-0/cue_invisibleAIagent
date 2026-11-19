@@ -81,6 +81,10 @@ public partial class MainWindow : Window
         TransparencySlider.ValueChanged += (_, e) => ApplyTransparency((int)Math.Round(e.NewValue));
         ApplyPin();
 
+        PromptBox.Text = preferences.CustomPrompt ?? settings.SystemPrompt;
+        assistant.SystemPrompt = PromptBox.Text;
+        BuildLanguageChips();
+
         fullSize = new Size(Width, Height);
         leftColumnWidth = LeftColumn.Width;
         AnswersOnlyBox.IsChecked = preferences.AnswersOnly;
@@ -153,9 +157,18 @@ public partial class MainWindow : Window
 
     private void OnToggleSettings(object sender, RoutedEventArgs e) => SetSettingsOpen(SettingsPanel.Visibility != Visibility.Visible);
 
+    private void OnCloseSettings(object sender, RoutedEventArgs e) => SetSettingsOpen(false);
+
     private void SetSettingsOpen(bool open)
     {
+        if (!open && SettingsPanel.Visibility == Visibility.Visible)
+        {
+            CommitPrompt();
+        }
+
         SettingsPanel.Visibility = open ? Visibility.Visible : Visibility.Collapsed;
+        ContentGrid.Visibility = open ? Visibility.Collapsed : Visibility.Visible;
+        QuestionBar.Visibility = open || preferences.AnswersOnly ? Visibility.Collapsed : Visibility.Visible;
 
         if (open)
         {
@@ -196,6 +209,11 @@ public partial class MainWindow : Window
     {
         var visibility = compact ? Visibility.Collapsed : Visibility.Visible;
 
+        if (compact)
+        {
+            SetSettingsOpen(false);
+        }
+
         foreach (var element in new UIElement[] { TitleText, StateText, TransparencyLabel, ControlsBar, LeftPanel, ColumnSplitter, AnswersHeader, QuestionBar })
         {
             element.Visibility = visibility;
@@ -203,8 +221,6 @@ public partial class MainWindow : Window
 
         if (compact)
         {
-            SettingsPanel.Visibility = Visibility.Collapsed;
-            SettingsButton.ClearValue(BorderBrushProperty);
             leftColumnWidth = LeftColumn.Width;
             LeftColumn.MinWidth = 0;
             LeftColumn.Width = new GridLength(0);
@@ -490,6 +506,107 @@ public partial class MainWindow : Window
         }
 
         return CaptureProtection.Apply(this, hidden);
+    }
+
+    private void BuildLanguageChips()
+    {
+        var conversation = preferences.ConversationLanguage ?? settings.Language ?? Languages.Auto;
+
+        AddChip(ConversationLanguages, Languages.Auto, "Авто", conversation, OnConversationLanguageChecked);
+        AddChip(AnswerLanguages, Languages.SameAsConversation, "Як розмова", preferences.AnswerLanguage, OnAnswerLanguageChecked);
+
+        foreach (var language in Languages.All)
+        {
+            AddChip(ConversationLanguages, language.Code, language.Label, conversation, OnConversationLanguageChecked);
+            AddChip(AnswerLanguages, language.Code, language.Label, preferences.AnswerLanguage, OnAnswerLanguageChecked);
+        }
+
+        ApplyConversationLanguage(conversation);
+        ApplyAnswerLanguage(preferences.AnswerLanguage);
+    }
+
+    private void AddChip(WrapPanel panel, string code, string label, string selected, RoutedEventHandler onChecked)
+    {
+        var chip = new RadioButton
+        {
+            Content = label,
+            Tag = code,
+            GroupName = panel.Name,
+            Style = (Style)FindResource("Chip"),
+            IsChecked = code == selected
+        };
+
+        chip.Checked += onChecked;
+        panel.Children.Add(chip);
+    }
+
+    private void OnConversationLanguageChecked(object sender, RoutedEventArgs e)
+    {
+        var code = (string)((RadioButton)sender).Tag;
+
+        preferences.ConversationLanguage = code;
+        ApplyConversationLanguage(code);
+        SavePreferences();
+        SetStatus($"Мова розмови: {LanguageLabel(code)}", isError: false);
+    }
+
+    private void OnAnswerLanguageChecked(object sender, RoutedEventArgs e)
+    {
+        var code = (string)((RadioButton)sender).Tag;
+
+        preferences.AnswerLanguage = code;
+        ApplyAnswerLanguage(code);
+        SavePreferences();
+        SetStatus($"Мова підказок: {LanguageLabel(code)}", isError: false);
+    }
+
+    private void ApplyConversationLanguage(string code)
+    {
+        assistant.Language = code == Languages.Auto ? null : code;
+        UpdateState();
+    }
+
+    private void ApplyAnswerLanguage(string code) => assistant.AnswerLanguage = Languages.Find(code)?.EnglishName;
+
+    private static string LanguageLabel(string code) => code switch
+    {
+        Languages.Auto => "визначається автоматично",
+        Languages.SameAsConversation => "як розмова",
+        _ => Languages.Find(code)?.Label ?? code
+    };
+
+    private void OnPromptBlur(object sender, KeyboardFocusChangedEventArgs e) => CommitPrompt();
+
+    private void OnResetPrompt(object sender, RoutedEventArgs e)
+    {
+        PromptBox.Text = settings.SystemPrompt;
+
+        if (!CommitPrompt())
+        {
+            SetStatus("Зараз і так стандартна інструкція", isError: false);
+        }
+    }
+
+    private bool CommitPrompt()
+    {
+        var text = PromptBox.Text.Trim();
+        var custom = text.Length == 0 || text == settings.SystemPrompt.Trim() ? null : text;
+
+        if (text.Length == 0)
+        {
+            PromptBox.Text = settings.SystemPrompt;
+        }
+
+        if (custom == preferences.CustomPrompt)
+        {
+            return false;
+        }
+
+        preferences.CustomPrompt = custom;
+        assistant.SystemPrompt = custom ?? settings.SystemPrompt;
+        SavePreferences();
+        SetStatus(custom is null ? "Повернуто стандартну інструкцію" : "Інструкцію збережено. Наступні підказки будуть за нею", isError: false);
+        return true;
     }
 
     private void RequireKey()
@@ -782,6 +899,7 @@ public partial class MainWindow : Window
     {
         Directory.CreateDirectory(settings.DataFolder);
         File.WriteAllText(contextPath, ContextBox.Text);
+        CommitPrompt();
 
         if (preferences.AnswersOnly)
         {
@@ -830,7 +948,7 @@ public partial class MainWindow : Window
     {
         var paused = assistant.Paused;
         var details = $"Слухаю звук комп'ютера ({assistant.Format}), мікрофон не записую.{Environment.NewLine}" +
-                      $"Розпізнавання: {settings.TranscribeModel}, мова {settings.Language ?? "авто"}. Підказки: {settings.ChatModel}.";
+                      $"Розпізнавання: {settings.TranscribeModel}, мова {LanguageLabel(assistant.Language ?? Languages.Auto)}. Підказки: {settings.ChatModel}.";
 
         PauseIcon.Text = paused ? "" : "";
         PauseText.Text = paused ? "Слухати" : "Пауза";

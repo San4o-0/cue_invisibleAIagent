@@ -26,7 +26,7 @@ public sealed class OpenAiClient : IDisposable
 
     public bool HasApiKey => apiKey.Length > 0;
 
-    public async Task<string> TranscribeAsync(byte[] wav, string prompt, CancellationToken cancellationToken)
+    public async Task<string> TranscribeAsync(byte[] wav, string prompt, string? language, CancellationToken cancellationToken)
     {
         using var content = new MultipartFormDataContent();
         var file = new ByteArrayContent(wav);
@@ -36,9 +36,9 @@ public sealed class OpenAiClient : IDisposable
         content.Add(new StringContent(settings.TranscribeModel), "model");
         content.Add(new StringContent("text"), "response_format");
 
-        if (settings.Language is not null)
+        if (language is not null)
         {
-            content.Add(new StringContent(settings.Language), "language");
+            content.Add(new StringContent(language), "language");
         }
 
         if (prompt.Length > 0)
